@@ -1,0 +1,5 @@
+# Example inputs for the separate Terraform state-bucket bootstrap root.
+# The bucket name must be globally unique across all AWS accounts and must not contain uppercase letters.
+aws_region        = "us-east-1"
+# Sets the AWS resource name or passes a named dependency from another module.
+state_bucket_name = "REPLACE_WITH_GLOBALLY_UNIQUE_STATE_BUCKET_NAME"
