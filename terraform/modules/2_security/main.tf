@@ -13,8 +13,6 @@ resource "aws_security_group" "tunnel" {
   name        = "${var.project_name}-${var.environment}-tunnel-sg"
   description = "SSH reverse-tunnel gateway. SSH from Oracle source and tunnel listener from DMS only."
   vpc_id      = var.vpc_id
-  ingress     = []
-  egress      = []
   tags        = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-tunnel-sg" })
 }
 
@@ -23,8 +21,6 @@ resource "aws_security_group" "dms" {
   name        = "${var.project_name}-${var.environment}-dms-sg"
   description = "Private AWS DMS replication connectivity."
   vpc_id      = var.vpc_id
-  ingress     = []
-  egress      = []
   tags        = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-dms-sg" })
 }
 
@@ -33,8 +29,6 @@ resource "aws_security_group" "postgres" {
   name        = "${var.project_name}-${var.environment}-postgres-sg"
   description = "Private PostgreSQL access from DMS and the SSM-managed gateway only."
   vpc_id      = var.vpc_id
-  ingress     = []
-  egress      = []
   tags        = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-postgres-sg" })
 }
 
@@ -43,8 +37,6 @@ resource "aws_security_group" "secretsmanager_endpoint" {
   name        = "${var.project_name}-${var.environment}-secretsmanager-vpce-sg"
   description = "HTTPS access to the Secrets Manager interface endpoint from AWS DMS only."
   vpc_id      = var.vpc_id
-  ingress     = []
-  egress      = []
   tags        = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-secretsmanager-vpce-sg" })
 }
 

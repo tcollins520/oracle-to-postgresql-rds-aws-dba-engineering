@@ -181,7 +181,7 @@ variable "manage_dms_cloudwatch_logs_role" {
 variable "create_dms_endpoints" {
   description = "Create DMS source and target endpoints only after the Oracle secret is populated and the tunnel is tested."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "create_dms_task" {

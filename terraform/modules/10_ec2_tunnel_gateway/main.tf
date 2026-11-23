@@ -26,8 +26,10 @@ data "aws_ami" "al2023" {
 }
 
 # Configures SSH access for the restricted Oracle reverse-tunnel connection.
+
 locals {
   gateway_user_data = <<-USERDATA
+    #!/bin/bash
     set -euxo pipefail
 
     dnf install -y openssh-server
@@ -44,14 +46,13 @@ locals {
     PasswordAuthentication no
     PermitRootLogin no
     PubkeyAuthentication yes
-    GatewayPorts clientspecified
+    GatewayPorts yes
     AllowUsers oracle-tunnel
     AllowTcpForwarding remote
     PermitListen ${var.private_ip}:${var.tunnel_listen_port}
     PermitTTY no
     X11Forwarding no
     AllowAgentForwarding no
-    ForceCommand /sbin/nologin
     MaxSessions 0
     SSHD
 
@@ -60,6 +61,7 @@ locals {
     systemctl enable --now amazon-ssm-agent || true
   USERDATA
 }
+
 
 # Provisions the private EC2 gateway that receives the Oracle reverse SSH tunnel.
 resource "aws_instance" "gateway" {
@@ -93,6 +95,7 @@ resource "aws_instance" "gateway" {
     Role = "Oracle reverse SSH tunnel"
   })
 }
+
 
 # Assigns a stable public Elastic IP for the Oracle source to reach the gateway.
 resource "aws_eip" "gateway" {
