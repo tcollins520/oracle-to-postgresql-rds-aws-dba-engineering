@@ -1,7 +1,12 @@
 
 # Converts Terraform tags into the format required by AWS Cloud Control resources.
 locals {
-  awscc_tags = [for key, value in var.tags : { key = key, value = value }]
+  awscc_tags = [
+    for key, value in var.tags : {
+      key   = key
+      value = value
+    }
+  ]
 }
 
 # Registers the Oracle 19c MIGPDB source for DMS Schema Conversion.
@@ -11,6 +16,7 @@ resource "awscc_dms_data_provider" "oracle" {
   description              = "Oracle-19c-MIGPDB-source"
   engine                   = "oracle"
   exact_settings           = false
+
   settings = {
     oracle_settings = {
       server_name   = var.oracle_server_name
@@ -19,6 +25,7 @@ resource "awscc_dms_data_provider" "oracle" {
       ssl_mode      = "none"
     }
   }
+
   tags = local.awscc_tags
 }
 
@@ -29,6 +36,7 @@ resource "awscc_dms_data_provider" "postgres" {
   description              = "RDS-PostgreSQL-target"
   engine                   = "postgres"
   exact_settings           = false
+
   settings = {
     postgre_sql_settings = {
       server_name   = var.postgres_server_name
@@ -37,6 +45,7 @@ resource "awscc_dms_data_provider" "postgres" {
       ssl_mode      = "require"
     }
   }
+
   tags = local.awscc_tags
 }
 
@@ -50,7 +59,8 @@ resource "awscc_dms_instance_profile" "this" {
   subnet_group_identifier     = var.schema_conversion_subnet_group_id
   vpc_security_groups         = [var.dms_security_group_id]
   kms_key_arn                 = var.kms_key_arn
-  tags                        = local.awscc_tags
+
+  tags = local.awscc_tags
 }
 
 # Creates the Oracle-to-PostgreSQL DMS Schema Conversion migration project.
@@ -61,6 +71,7 @@ resource "awscc_dms_migration_project" "this" {
   instance_profile_identifier  = "${var.project_name}-${var.environment}-sc-profile"
 
   source_data_provider_descriptors = [{
+    data_provider_identifier        = awscc_dms_data_provider.oracle.data_provider_identifier
     data_provider_arn               = awscc_dms_data_provider.oracle.data_provider_arn
     data_provider_name              = awscc_dms_data_provider.oracle.data_provider_name
     secrets_manager_secret_id       = var.oracle_secret_arn
@@ -68,6 +79,7 @@ resource "awscc_dms_migration_project" "this" {
   }]
 
   target_data_provider_descriptors = [{
+    data_provider_identifier        = awscc_dms_data_provider.postgres.data_provider_identifier
     data_provider_arn               = awscc_dms_data_provider.postgres.data_provider_arn
     data_provider_name              = awscc_dms_data_provider.postgres.data_provider_name
     secrets_manager_secret_id       = var.postgres_secret_arn

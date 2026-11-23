@@ -1,3 +1,4 @@
+
 # IAM roles and permissions for DMS, Schema Conversion, and EC2.
 
 # Defines the EC2 trust policy.
@@ -77,8 +78,11 @@ data "aws_iam_policy_document" "schema_conversion_s3_assume_role" {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type        = "Service"
-      identifiers = ["schema-conversion.dms.amazonaws.com"]
+      type = "Service"
+      identifiers = [
+        "schema-conversion.dms.amazonaws.com",
+        "dms.${var.aws_region}.amazonaws.com"
+      ]
     }
   }
 }
@@ -225,7 +229,7 @@ data "aws_iam_policy_document" "schema_conversion_s3" {
       "s3:PutObject"
     ]
 
-    resources = ["${var.artifacts_bucket_arn}/schema-conversion/*"]
+    resources = ["${var.artifacts_bucket_arn}/*"]
   }
 
   statement {
