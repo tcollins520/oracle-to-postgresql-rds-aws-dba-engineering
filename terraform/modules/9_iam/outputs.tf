@@ -18,3 +18,12 @@ output "schema_conversion_secrets_role_arn" {
 output "schema_conversion_s3_role_arn" {
   value = aws_iam_role.schema_conversion_s3.arn
 }
+
+
+output "dms_assessment_s3_role_arn" {
+  value = aws_iam_role.dms_assessment_s3.arn
+}
+
+output "dms_assessment_s3_role_name" {
+  value = aws_iam_role.dms_assessment_s3.name
+}

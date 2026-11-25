@@ -257,3 +257,68 @@ resource "aws_iam_role_policy" "schema_conversion_s3" {
   role   = aws_iam_role.schema_conversion_s3.id
   policy = data.aws_iam_policy_document.schema_conversion_s3.json
 }
+
+
+
+# ==========================================================
+# DMS Premigration Assessment S3 Access
+# ==========================================================
+
+# Allows AWS DMS to assume the assessment S3 access role.
+data "aws_iam_policy_document" "dms_assessment_s3_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["dms.amazonaws.com"]
+    }
+  }
+}
+
+# Creates the dedicated DMS assessment S3 role.
+resource "aws_iam_role" "dms_assessment_s3" {
+  name               = "${var.project_name}-${var.environment}-dms-assessment-s3-role"
+  assume_role_policy = data.aws_iam_policy_document.dms_assessment_s3_assume_role.json
+
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-${var.environment}-dms-assessment-s3-role"
+  })
+}
+
+# Restricts assessment report access to the project artifacts bucket.
+data "aws_iam_policy_document" "dms_assessment_s3" {
+  statement {
+    sid    = "AssessmentReportBucketAccess"
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ]
+
+    resources = [var.artifacts_bucket_arn]
+  }
+
+  statement {
+    sid    = "AssessmentReportObjectAccess"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObjectTagging"
+    ]
+
+    resources = ["${var.artifacts_bucket_arn}/*"]
+  }
+}
+
+# Attaches the assessment S3 permissions.
+resource "aws_iam_role_policy" "dms_assessment_s3" {
+  name   = "${var.project_name}-${var.environment}-dms-assessment-s3-policy"
+  role   = aws_iam_role.dms_assessment_s3.id
+  policy = data.aws_iam_policy_document.dms_assessment_s3.json
+}

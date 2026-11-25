@@ -1,18 +1,58 @@
+
 # DMS table mappings, replication settings, and endpoint connectivity.
 locals {
   table_mappings = jsonencode({
-    rules = [
-      for index, schema in var.source_schemas : {
-        "rule-type" = "selection"
-        "rule-id"   = tostring(index + 1)
-        "rule-name" = "include-${lower(schema)}"
-        "object-locator" = {
-          "schema-name" = schema
-          "table-name"  = "%"
+    rules = concat(
+      [
+        for index, schema in var.source_schemas : {
+          "rule-type" = "selection"
+          "rule-id"   = tostring(index + 1)
+          "rule-name" = "include-${lower(schema)}"
+          "object-locator" = {
+            "schema-name" = schema
+            "table-name"  = "%"
+          }
+          "rule-action" = "include"
         }
-        "rule-action" = "include"
-      }
-    ]
+      ],
+      flatten([
+        for index, schema in var.source_schemas : [
+          {
+            "rule-type"   = "transformation"
+            "rule-id"     = tostring(100 + index * 3)
+            "rule-name"   = "lowercase-schema-${lower(schema)}"
+            "rule-target" = "schema"
+            "object-locator" = {
+              "schema-name" = schema
+            }
+            "rule-action" = "convert-lowercase"
+          },
+          {
+            "rule-type"   = "transformation"
+            "rule-id"     = tostring(101 + index * 3)
+            "rule-name"   = "lowercase-tables-${lower(schema)}"
+            "rule-target" = "table"
+            "object-locator" = {
+              "schema-name" = schema
+              "table-name"  = "%"
+            }
+            "rule-action" = "convert-lowercase"
+          },
+          {
+            "rule-type"   = "transformation"
+            "rule-id"     = tostring(102 + index * 3)
+            "rule-name"   = "lowercase-columns-${lower(schema)}"
+            "rule-target" = "column"
+            "object-locator" = {
+              "schema-name" = schema
+              "table-name"  = "%"
+              "column-name" = "%"
+            }
+            "rule-action" = "convert-lowercase"
+          }
+        ]
+      ])
+    )
   })
 
   task_settings = jsonencode({
