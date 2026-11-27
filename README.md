@@ -2,7 +2,7 @@
 
 A production-style cloud database migration engineering portfolio project demonstrating the assessment, conversion, migration, operation, validation, and modernization of an Oracle Database 19c Enterprise Edition environment to Amazon RDS for PostgreSQL 18.6 using AWS-native services and Terraform.
 
-> **Project status — November 25, 2026:** AWS infrastructure, Oracle source connectivity, DMS endpoints, DMS Schema Conversion project, converted PostgreSQL target schema, DMS Full Load + CDC task configuration, and premigration readiness checks are complete. The DMS replication task is created and in `ready` state. **Full Load has not been started; CDC, data reconciliation, and cutover are not yet complete.**
+> **Project status — November 27, 2026:** AWS infrastructure, Oracle source connectivity, DMS endpoints, DMS Schema Conversion project, converted PostgreSQL target schema, and DMS Full Load + CDC execution are complete. All 12 in-scope table row counts reconcile exactly (3,096,217 rows total), and primary-key metrics match across all 12 tables. A controlled CDC test demonstrated INSERT, UPDATE, and DELETE application with zero errors. Automated all-column comparison across all 12 tables, sustained CDC validation, and cutover/rollback rehearsal remain outstanding. **Production cutover has not occurred.**
 
 ## Project objectives
 
@@ -87,7 +87,7 @@ Separate supporting workstreams:
 - Application schemas: `COMMON`, `FINANCE`, `GRANTS`, and `PROCUREMENT`.
 - Source inventory: 12 application tables, 11 sequences, 29 indexes, and 244 constraints.
 - Approximate source data volume: 3.1 million rows.
-- A historical 12-row source-count discrepancy (3,096,217 versus 3,096,205) remains an explicit reconciliation item.
+- Fresh per-table reconciliation superseded the earlier 12-row aggregate count discrepancy: all 12 table counts now match exactly, totaling 3,096,217 rows. The original cause of the earlier aggregate discrepancy was not conclusively established.
 
 ### AWS target and migration components
 
@@ -145,16 +145,16 @@ Provision the AWS migration platform, convert the database schema, and migrate d
 - Reconcile source and target row counts, aggregates, relationships, LOB samples, and sequence behavior.
 - Reconcile the historical 12-row source count difference.
 
-**Current checkpoint — November 25, 2026**
+**Current checkpoint — November 27, 2026**
 - AWS infrastructure and RDS PostgreSQL target deployed.
 - DMS replication instance and both endpoints deployed; both endpoint connection tests succeeded.
 - DMS Schema Conversion project created; the four schemas were assessed and conversion output reviewed.
 - Target schema deployed: 4 schemas, 12 tables, 11 sequences, 29 indexes, and 244 constraints.
-- DMS premigration assessment completed with 5 of 5 selected checks passing.
+- The earlier DMS premigration assessment reported 1 failed and 4 passed checks. The four required Oracle dictionary-view SELECT grants were subsequently verified directly for `DMS_USER`; this grant verification is not a new 5/5 assessment report.
 - Oracle supplemental logging verified for all 12 in-scope tables.
 - PostgreSQL DMS target permissions granted and verified; all 12 target tables were empty at the latest check.
 - DMS Full Load + CDC task created through Terraform and verified in `ready` state.
-- **Full Load has not started. CDC is not running. Data reconciliation and cutover have not been completed.**
+- DMS Full Load completed. Initial dependency-order errors affected three `PROCUREMENT` tables; the affected parent/child tables were reloaded in dependency order and subsequently completed without Full Load errors. Orphan checks returned zero.
 
 **Phase gate**
 - Full Load and CDC complete with no unresolved blocking errors.
@@ -263,12 +263,26 @@ oracle-to-postgresql-rds-aws-etl/
 │   │   ├── 11_dms/
 │   │   ├── 12_schema_conversion/
 │   │   └── 13_monitoring/
-│   ├── scripts/
-│   └── docs/
-├── docs/
-│   ├── Oracle_to_PostgreSQL_RDS_Migration_Runbook_v1_11.docx
-│   ├── Oracle_to_PostgreSQL_AWS_Migration_Plan_v1_4.docx
-│   └── Oracle_PostgreSQL_Migration_Interview_Study_Guide_v1_2.docx
+├── deliverables/
+│   ├── Migration Plan Oracle19c_to_PostgreSQL_RDS_AWS_DMS.pptx
+│   └── Migration Plan_Oracle19c_to_PostgreSQL_RDS_AWS_DMS.docx
+├── scripts/
+│   ├── connectivity/
+│   │   ├── start-oracle-reverse-tunnel.sh
+│   │   └── test-tunnel-from-aws.sh
+│   ├── dms/
+│   │   ├── check-dms-task-status.sh
+│   │   └── monitor-dms-table-progress.sh
+│   ├── postgres/
+│   │   ├── schema-review/
+│   │   │   └── oracle_to_postgresql_schema_review_v1.sql
+│   │   ├── create-postgres-dms-target-role.sql
+│   │   ├── grant-postgres-dms-target.sql
+│   │   └── validate-postgres-target.sh
+│   └── secrets/
+│       ├── populate-oracle-source-secret.ps1
+│       ├── populate-postgres-target-secret.ps1
+│       └── populate-schema-conversion-oracle-secret.ps1
 ├── phase-1-oracle-source/
 ├── phase-2-aws-migration/
 ├── phase-3-postgresql-dba/
@@ -294,4 +308,3 @@ The phase directories above describe the intended documentation/workstream organ
 - Record only evidenced completion. A configured resource is not proof of a successful migration or production cutover.
 - Do not perform production cutover without explicit approval and an approved rollback plan.
 
-**Project status is updated as of November 25, 2026.** See the phase checkpoint above and `terraform/README.md` for the latest deployment-level details.
